@@ -1,0 +1,7 @@
+---
+Name: vite-coreresources
+After: coreresources
+---
+SilverStripe\Core\Injector\Injector:
+  SilverStripe\Core\Manifest\ResourceURLGenerator:
+    class: Somar\Vite\ResourceURLGenerator

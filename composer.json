@@ -1,6 +1,6 @@
 {
-    "name": "silverstripe-module/skeleton",
-    "description": "A skeleton for Silverstripe CMS modules.",
+    "name": "somardigital/silverstripe-vite",
+    "description": "A module to allow loading Vite assets in Silverstripe",
     "type": "silverstripe-vendormodule",
     "keywords": [
         "silverstripe",
@@ -23,11 +23,15 @@
             "SilverStripeModule\\Skeleton\\Tests\\": "tests/php/"
         }
     },
-    "extra": {
-        "expose": [
-            "client/dist"
-        ]
-    },
     "minimum-stability": "dev",
-    "prefer-stable": true
+    "prefer-stable": true,
+    "config": {
+        "allow-plugins": {
+            "phpstan/extension-installer": true
+        }
+    },
+    "scripts": {
+        "lint": "phpcs src/",
+        "lint:fix": "phpcbf src/"
+    }
 }
