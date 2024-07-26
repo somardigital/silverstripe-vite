@@ -1,5 +1,7 @@
 # Silverstripe Vite
 
+WIP: This project is a work in progress. Although it is fully working we are still implementing unit testing and github actions.
+
 This module provides the ability to load Vite assets into Silverstripe.
 
 Note: This module does not provide any frontend build tooling
