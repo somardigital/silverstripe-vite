@@ -21,3 +21,11 @@ composer require "somardigital/silverstripe-vite"
 
 - [Configuration](docs/en/configuration.md)
 - [Usage](docs/en/usage.md)
+
+## Todo
+
+* Add unit tests
+* Fix CI
+* Implement usage in templates
+* Allow multiple manifest files
+* Add support for modules
