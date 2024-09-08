@@ -29,13 +29,13 @@ class Vite implements RequirementsInterface
     /**
      * URL to the Vite HMR dev server
      */
-    private ?string $devServerUrl;
+    private ?string $devServerUrl = null;
 
     /**
      * URL to check if the dev server is running. This defaults to the same as
      * the server URL but can be defined separately if running in a docker setup
      */
-    private ?string $devServerCheckUrl;
+    private ?string $devServerCheckUrl = null;
 
     /**
      * Whether the Vite dev server config has been initialized
@@ -50,7 +50,7 @@ class Vite implements RequirementsInterface
     /**
      * Whether the Vite dev server is running
      */
-    private bool $isDevServerRunning = false;
+    private ?bool $isDevServerRunning = null;
 
     /**
      * Paths to disable nonce for (to prevent files being loaded multiple times)
@@ -138,6 +138,12 @@ class Vite implements RequirementsInterface
         return static::singleton()
             ->getManifestProvider()
             ->resolveURL($resource);
+    }
+
+    public function __construct()
+    {
+        $this->devServerUrl = rtrim(Environment::getEnv('VITE_SERVER_URL'), '/');
+        $this->devServerCheckUrl = Environment::getEnv('VITE_SERVER_CHECK_URL');
     }
 
     /**
@@ -407,22 +413,7 @@ class Vite implements RequirementsInterface
             return;
         }
 
-        $this->devServerUrl = rtrim(Environment::getEnv('VITE_SERVER_URL'), '/');
-        if (!$this->devServerUrl) {
-            return;
-        }
-
-        $this->devServerCheckUrl = Environment::getEnv('VITE_SERVER_CHECK_URL') ?: $this->devServerUrl;
-
-        // Check if the dev server is running
-        $parsedUrl = parse_url($this->devServerCheckUrl);
-        $handle = @fsockopen($parsedUrl['host'], $parsedUrl['port']);
-        if ($handle) {
-            $this->isDevServerRunning = true;
-            fclose($handle);
-        }
-
-        if (!$this->isDevServerRunning) {
+        if (!$this->isDevServerRunning()) {
             return;
         }
 
@@ -435,10 +426,31 @@ class Vite implements RequirementsInterface
     /**
      * Check whether Vite dev server is actually running
      */
-    public function isDevServerRunning(): bool
+    public function isDevServerRunning(bool $force = false): bool
     {
-        // Initialize the dev server
-        $this->initDevServer();
+        if ($this->isDevServerRunning !== null && !$force) {
+            return $this->isDevServerRunning;
+        }
+
+        $this->isDevServerRunning = false;
+
+        // Never run in live mode
+        if (Director::isLive()) {
+            return false;
+        }
+
+        $devServerCheckUrl = $this->getDevServerCheckUrl();
+        if (!$devServerCheckUrl) {
+            return false;
+        }
+
+        // Check if the dev server is running
+        $parsedUrl = parse_url($devServerCheckUrl);
+        $handle = @fsockopen($parsedUrl['host'], $parsedUrl['port']);
+        if ($handle) {
+            $this->isDevServerRunning = true;
+            fclose($handle);
+        }
 
         return $this->isDevServerRunning;
     }
@@ -457,7 +469,11 @@ class Vite implements RequirementsInterface
      */
     public function getDevServerCheckUrl(): string
     {
-        return $this->devServerCheckUrl;
+        if ($this->devServerCheckUrl) {
+            return $this->devServerCheckUrl;
+        } else {
+            return $this->getDevServerUrl();
+        }
     }
 
     /**
