@@ -379,18 +379,16 @@ class Vite implements RequirementsInterface
             return;
         }
 
-        Requirements::customScriptWithAttributes(sprintf(
-            <<<JAVASCRIPT
-                import RefreshRuntime from '%s'
+        Requirements::insertHeadTags(sprintf(
+            '<script type="module">
+                import RefreshRuntime from "%s"
                 RefreshRuntime.injectIntoGlobalHook(window)
                 window.$RefreshReg$ = () => {}
                 window.$RefreshSig$ = () => (type) => type
                 window.__vite_plugin_react_preamble_installed__ = true
-            JAVASCRIPT,
+            </script>',
             $this->devServerResourceUrl('@react-refresh')
-        ), [
-            'type' => 'module',
-        ]);
+        ));
 
         $this->reactRefreshRuntimeInit = true;
     }
