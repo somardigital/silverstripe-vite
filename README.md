@@ -14,8 +14,8 @@ composer require "somardigital/silverstripe-vite"
 
 ## Requirements
 
-* php: ^8.1
-* silverstripe/cms: ^5
+* php: ^8.3
+* silverstripe/cms: ^6.0
 
 ## Documentation
 
