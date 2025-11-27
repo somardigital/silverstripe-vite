@@ -442,13 +442,25 @@ class Vite implements RequirementsInterface
             return false;
         }
 
-        // Check if the dev server is running
-        $parsedUrl = parse_url($devServerCheckUrl);
-        $handle = @fsockopen($parsedUrl['host'], $parsedUrl['port']);
-        if ($handle) {
-            $this->isDevServerRunning = true;
-            fclose($handle);
+        $ch = curl_init($devServerCheckUrl);
+        if (false === $ch) {
+            return false;
         }
+
+        curl_setopt($ch, CURLOPT_NOBODY, true);        // HEAD request only
+        curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+        curl_exec($ch);
+
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $err      = curl_errno($ch);
+
+        curl_close($ch);
+
+        if ($err === 0 && $httpCode >= 200 && $httpCode < 500) {
+            $this->isDevServerRunning = true;
+        };
 
         return $this->isDevServerRunning;
     }
