@@ -59,21 +59,21 @@ class Vite implements RequirementsInterface
 
     /**
      * Manually initialise the Vite dev server. This is useful for when you want
-     * to insert the react refresh runtime script.
+     * to insert the React refresh runtime script.
      */
     public static function configDevServer(bool $isReact = false): void
     {
-        self::singleton()->initDevServer();
+        Vite::singleton()->initDevServer();
 
         if ($isReact) {
-            self::singleton()->insertReactRefresh();
+            Vite::singleton()->insertReactRefresh();
         }
     }
 
     /**
      * Register the given JavaScript file as required.
      *
-     * This will also recursivly load any imports/css from the chunk as per vite
+     * This will also recursively load any imports/css from the chunk as per vite
      * manifest specs
      *
      * @param string $file The javascript file to load, relative to site root
@@ -88,14 +88,14 @@ class Vite implements RequirementsInterface
      */
     public static function javascript(string $file, array $options = []): void
     {
-        self::singleton()->requireJavascript($file, $options);
+        Vite::singleton()->requireJavascript($file, $options);
     }
 
     /**
      * Register the given stylesheet into the list of requirements.
      *
      * @param string $file The CSS file to load, relative to site root
-     * @param string $media Comma-separated list of media types to use in the link tag
+     * @param ?string $media Comma-separated list of media types to use in the link tag
      *                      (e.g. 'screen,projector')
      * @param array $options List of options. Available options include:
      * - 'preload' : Preload the resource (defaults to true)
@@ -104,20 +104,20 @@ class Vite implements RequirementsInterface
      */
     public static function css(string $file, ?string $media = null, array $options = []): void
     {
-        self::singleton()->requireCss($file, $media, $options);
+        Vite::singleton()->requireCss($file, $media, $options);
     }
 
     /**
      * Preload the given file into the head of the document.
      *
      * @param string $file The file to preload, relative to site root
-     * @param string $as The type of resource to preload
+     * @param ?string $as The type of resource to preload
      *                   (e.g. 'script', 'style', 'font', 'image', 'document')
-     * @param string $type The MIME type of the resource
+     * @param ?string $type The MIME type of the resource
      */
     public static function preload(string $file, ?string $as = null, ?string $type = null): void
     {
-        self::singleton()->requirePreload($file, $as, $type);
+        Vite::singleton()->requirePreload($file, $as, $type);
     }
 
     /**
@@ -149,7 +149,7 @@ class Vite implements RequirementsInterface
     /**
      * Register the given JavaScript file as required.
      *
-     * This will also recursivly load any imports/css from the chunk as per vite
+     * This will also recursively load any imports/css from the chunk as per vite
      * manifest specs
      *
      * @param string $file The javascript file to load, relative to site root
@@ -186,7 +186,7 @@ class Vite implements RequirementsInterface
      * Register the given stylesheet into the list of requirements.
      *
      * @param string $file The CSS file to load, relative to site root
-     * @param string $media Comma-separated list of media types to use in the link tag
+     * @param ?string $media Comma-separated list of media types to use in the link tag
      *                      (e.g. 'screen,projector')
      * @param array $options List of options. Available options include:
      * - 'preload' : Preload the resource (defaults to true)
@@ -214,9 +214,9 @@ class Vite implements RequirementsInterface
      * Preload the given file into the head of the document.
      *
      * @param string $file The file to preload, relative to site root
-     * @param string $as The type of resource to preload
+     * @param ?string $as The type of resource to preload
      *                   (e.g. 'script', 'style', 'font', 'image', 'document')
-     * @param string $type The MIME type of the resource
+     * @param ?string $type The MIME type of the resource
      */
     public function requirePreload(string $file, ?string $as = null, ?string $type = null): void
     {
@@ -233,7 +233,7 @@ class Vite implements RequirementsInterface
     /**
      * Add a JS file to the list of files to be loaded
      *
-     * This will also recursivly load any imports/css from the chunk as per vite
+     * This will also recursively load any imports/css from the chunk as per vite
      * manifest specs
      */
     protected function addJsFromManifest(string $file, array $options = [], &$preloads = []): void
@@ -442,13 +442,25 @@ class Vite implements RequirementsInterface
             return false;
         }
 
-        // Check if the dev server is running
-        $parsedUrl = parse_url($devServerCheckUrl);
-        $handle = @fsockopen($parsedUrl['host'], $parsedUrl['port']);
-        if ($handle) {
-            $this->isDevServerRunning = true;
-            fclose($handle);
+        $ch = curl_init($devServerCheckUrl);
+        if (false === $ch) {
+            return false;
         }
+
+        curl_setopt($ch, CURLOPT_NOBODY, true);        // HEAD request only
+        curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+        curl_exec($ch);
+
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $err      = curl_errno($ch);
+
+        curl_close($ch);
+
+        if ($err === 0 && $httpCode >= 200 && $httpCode < 500) {
+            $this->isDevServerRunning = true;
+        };
 
         return $this->isDevServerRunning;
     }
