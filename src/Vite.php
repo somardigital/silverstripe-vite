@@ -255,7 +255,7 @@ class Vite implements RequirementsInterface
         ];
 
         foreach ($resource['imports'] ?? [] as $import) {
-            $this->addJsFromManifest($import, $preloads);
+            $this->addJsFromManifest($import, $options, $preloads);
         }
 
         foreach ($resource['css'] ?? [] as $css) {
